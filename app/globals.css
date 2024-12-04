@@ -3,19 +3,67 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-background: #ffffff;
+  /* 白背景 */
+  --color-foreground: #171717;
+  --color-primary: #1d4ed8;
+  /* 座席の未選択時の青 */
+  --color-secondary: #facc15;
+  /* 座席の選択時の黄色 */
+  --color-border: #e5e7eb;
+
+  --font-body: 'Arial', 'Helvetica', sans-serif;
+  --font-heading: 'Roboto', 'Helvetica', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-background: #0a0a0a;
+    --color-foreground: #ededed;
+    --color-primary: #3b82f6;
+    --color-secondary: #fde047;
+    --color-border: #374151;
   }
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--color-foreground);
+  background: var(--color-background);
+  /* 背景を白に設定 */
+  font-family: var(--font-body);
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  margin-bottom: 0.5rem;
+  line-height: 1.25;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  background-color: var(--color-primary);
+  color: var(--color-background);
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: var(--color-secondary);
 }

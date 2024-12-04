@@ -85,15 +85,15 @@ export default function ForumPage() {
             </button>
 
             <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-2">スレッドを作成する</h2>
+                <h2 className="text-lg font-bold text-gray-900 mb-2">スレッドを作成する</h2>
                 <form onSubmit={handleThreadSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium mb-1">スレッドタイトル</label>
+                        <label className="block text-sm font-medium text-gray-900 mb-1">スレッドタイトル</label>
                         <input
                             type="text"
                             value={newThread.title}
                             onChange={(e) => setNewThread({ title: e.target.value })}
-                            className="w-full p-2 border border-gray-300 rounded"
+                            className="w-full p-2 border border-gray-300 rounded text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="スレッドのタイトルを入力"
                         />
                     </div>
@@ -106,7 +106,7 @@ export default function ForumPage() {
             {threads.map((thread) => (
                 <div key={thread.id} className="mb-6 border border-gray-300 p-4 rounded bg-gray-50">
                     <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-semibold">{thread.title}</h2>
+                        <h2 className="text-lg font-bold text-gray-900">{thread.title}</h2>
                         <button
                             onClick={() => deleteThread(thread.id)}
                             className="text-red-500 hover:underline"
@@ -123,7 +123,7 @@ export default function ForumPage() {
                         className="space-y-4 mt-4"
                     >
                         <div>
-                            <label className="block text-sm font-medium mb-1">名前</label>
+                            <label className="block text-sm font-medium text-gray-900 mb-1">名前</label>
                             <input
                                 type="text"
                                 value={newPost.threadId === thread.id ? newPost.name : ""}
@@ -134,12 +134,12 @@ export default function ForumPage() {
                                         name: e.target.value,
                                     }))
                                 }
-                                className="w-full p-2 border border-gray-300 rounded"
+                                className="w-full p-2 border border-gray-300 rounded text-gray-900"
                                 placeholder="名無しさん"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">メッセージ</label>
+                            <label className="block text-sm font-medium text-gray-900 mb-1">メッセージ</label>
                             <textarea
                                 ref={thread.id === newPost.threadId ? newPostInputRef : null}
                                 value={newPost.threadId === thread.id ? newPost.message : ""}
@@ -150,7 +150,7 @@ export default function ForumPage() {
                                         message: e.target.value,
                                     }))
                                 }
-                                className="w-full p-2 border border-gray-300 rounded"
+                                className="w-full p-2 border border-gray-300 rounded text-gray-900"
                                 rows={4}
                                 placeholder="メッセージを入力"
                             />
@@ -160,17 +160,17 @@ export default function ForumPage() {
                         </button>
                     </form>
                     <div className="mt-4 space-y-4">
-                        <h3 className="text-md font-semibold">投稿一覧</h3>
+                        <h3 className="text-md font-semibold text-gray-900">投稿一覧</h3>
                         {thread.posts.map((post) => (
                             <div
                                 key={post.id}
                                 className="border border-gray-300 p-4 rounded bg-white flex justify-between items-start"
                             >
                                 <div>
-                                    <p className="text-sm text-gray-500">
+                                    <p className="text-sm text-gray-900">
                                         No.{post.id} 名前: {post.name}
                                     </p>
-                                    <p className="mt-2 text-gray-800">{post.message}</p>
+                                    <p className="mt-2 text-gray-900">{post.message}</p>
                                 </div>
                                 <button
                                     onClick={() => deletePost(thread.id, post.id)}

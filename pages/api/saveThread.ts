@@ -9,8 +9,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         try {
-            // Azure Functions にリクエストを転送
-            const response = await fetch('http://localhost:7071/api/SaveThreadFunction', {
+            console.log('Sending request to Azure Functions saveThread...');
+
+            const functionUrl = 'https://nextjs-functions-appllkmnjc35s.azurewebsites.net/api/saveThread';
+            console.log('Request URL:', functionUrl);
+            console.log('Request body:', JSON.stringify(req.body));
+
+            const response = await fetch(functionUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -23,15 +28,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 }),
             });
 
+            console.log('Azure Function Status:', response.status);
+            console.log('Azure Function Headers:', Object.fromEntries(response.headers));
+
+            const responseText = await response.text();
+            console.log('Azure Function Response:', responseText);
+
             if (!response.ok) {
-                throw new Error(`Azure Functions returned ${response.status}`);
+                // レスポンスの詳細情報を含めてエラーをスロー
+                throw new Error(`Azure Functions returned ${response.status}: ${responseText}`);
             }
 
-            const data = await response.json();
-            return res.status(201).json({ message: "Thread created successfully", threadId: id });
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (parseError) {
+                console.error('Failed to parse response:', parseError);
+                throw new Error('Invalid JSON response from Azure Functions');
+            }
+
+            return res.status(201).json({
+                message: "Thread created successfully",
+                threadId: id,
+                details: data
+            });
         } catch (error) {
-            console.error('Error in saveThread API:', error);
-            return res.status(500).json({ error: 'Internal Server Error' });
+            console.error('Error in saveThread API:', {
+                message: error.message,
+                stack: error.stack,
+                name: error.name
+            });
+
+            return res.status(500).json({
+                error: 'Internal Server Error',
+                details: error.message,
+                timestamp: new Date().toISOString()
+            });
         }
     } else {
         res.setHeader("Allow", ["POST"]);

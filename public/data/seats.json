@@ -1,0 +1,16 @@
+{
+    "seats": [
+        {
+            "seat": "A1-1",
+            "status": "reserved"
+        },
+        {
+            "seat": "A1-2",
+            "status": "occupied"
+        },
+        {
+            "seat": "A1-3",
+            "status": "available"
+        }
+    ]
+}

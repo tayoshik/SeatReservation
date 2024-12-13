@@ -1,9 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { BlobServiceClient } from '@azure/storage-blob';
-
-// Blobストレージ接続設定
-const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING!);
-const containerClient = blobServiceClient.getContainerClient('threads');
+import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     console.log(`[DEBUG] Request method: ${req.method}`);
@@ -22,51 +17,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         try {
-            // Blobを取得
-            const blobClient = containerClient.getBlockBlobClient(`${threadId}.json`);
-            const exists = await blobClient.exists();
-
-            if (!exists) {
-                console.error(`[ERROR] Thread file not found: ${threadId}.json`);
-                return res.status(404).json({
-                    message: 'Thread Not Found',
+            // Azure Functions にリクエストを転送
+            const response = await fetch('https://nextjs-functions-appllkmnjc35s.azurewebsites.net/api/deletePost', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
                     threadId,
-                });
-            }
-
-            // Blobの内容を取得
-            const downloadResponse = await blobClient.download();
-            const threadData = await streamToString(downloadResponse.readableStreamBody!);
-            const thread = JSON.parse(threadData);
-
-            // 投稿を検索して削除
-            const postIndex = thread.posts.findIndex((post: any) => post.id === postId);
-
-            if (postIndex === -1) {
-                console.error(`[ERROR] Post not found: ${postId}`);
-                return res.status(404).json({
-                    message: 'Post Not Found',
-                    threadId,
-                    postId,
-                });
-            }
-
-            // 投稿を配列から削除
-            const deletedPost = thread.posts.splice(postIndex, 1)[0];
-
-            // 更新されたデータをBlobに保存
-            const updatedData = JSON.stringify(thread, null, 2);
-
-            await blobClient.upload(Buffer.from(updatedData), updatedData.length, {
-                blobHTTPHeaders: { blobContentType: 'application/json' }
+                    postId
+                }),
             });
 
-            console.log(`[DEBUG] Post deleted from thread ${threadId}:`, deletedPost);
+            if (!response.ok) {
+                throw new Error(`Azure Functions returned ${response.status}`);
+            }
+
+            const data = await response.json();
             return res.status(200).json({
                 message: 'Post Deleted',
-                deletedPost,
+                deletedPost: data.deletedPost
             });
-        } catch (error: any) {
+
+        } catch (error) {
             console.error(`[ERROR] Failed to process request:`, error);
             return res.status(500).json({
                 message: 'Internal Server Error',
@@ -80,18 +53,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             allowedMethods: ['DELETE'],
         });
     }
-}
-
-// StreamをStringに変換するユーティリティ関数
-async function streamToString(readableStream: NodeJS.ReadableStream): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const chunks: Buffer[] = [];
-        readableStream.on('data', (data) => {
-            chunks.push(Buffer.from(data));
-        });
-        readableStream.on('end', () => {
-            resolve(Buffer.concat(chunks).toString('utf8'));
-        });
-        readableStream.on('error', reject);
-    });
 }

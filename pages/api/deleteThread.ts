@@ -1,9 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { BlobServiceClient } from '@azure/storage-blob';
-
-// Blobストレージ接続設定
-const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING!);
-const containerClient = blobServiceClient.getContainerClient('threads');
+import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     console.log(`[DEBUG] Request method: ${req.method}`);
@@ -22,33 +17,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         try {
-            // Blobを取得
-            const blobClient = containerClient.getBlockBlobClient(`${threadId}.json`);
-            const exists = await blobClient.exists();
-
-            if (!exists) {
-                console.error(`[ERROR] Thread file not found: ${threadId}.json`);
-                return res.status(404).json({
-                    message: 'Thread Not Found',
-                    threadId,
-                });
-            }
-
-            // スレッドの内容を取得（削除前の確認とログ用）
-            const downloadResponse = await blobClient.download();
-            const threadData = await streamToString(downloadResponse.readableStreamBody!);
-            const thread = JSON.parse(threadData);
-
-            // Blobを削除
-            await blobClient.delete();
-
-            console.log(`[DEBUG] Thread deleted: ${threadId}`, thread);
-            return res.status(200).json({
-                message: 'Thread Deleted',
-                deletedThread: thread,
+            // Azure Functions にリクエストを転送
+            const response = await fetch('https://nextjs-functions-appllkmnjc35s.azurewebsites.net/api/deleteThread', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    threadId
+                }),
             });
 
-        } catch (error: any) {
+            if (!response.ok) {
+                throw new Error(`Azure Functions returned ${response.status}`);
+            }
+
+            const data = await response.json();
+            return res.status(200).json({
+                message: 'Thread Deleted',
+                deletedThread: data.deletedThread
+            });
+
+        } catch (error) {
             console.error(`[ERROR] Failed to process request:`, error);
             return res.status(500).json({
                 message: 'Internal Server Error',
@@ -62,18 +52,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             allowedMethods: ['DELETE'],
         });
     }
-}
-
-// StreamをStringに変換するユーティリティ関数
-async function streamToString(readableStream: NodeJS.ReadableStream): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const chunks: Buffer[] = [];
-        readableStream.on('data', (data) => {
-            chunks.push(Buffer.from(data));
-        });
-        readableStream.on('end', () => {
-            resolve(Buffer.concat(chunks).toString('utf8'));
-        });
-        readableStream.on('error', reject);
-    });
 }
